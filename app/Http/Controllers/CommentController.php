@@ -54,8 +54,12 @@ class CommentController extends Controller
             ], 404);
         }
 
-        return Comment::where('project_id', $project_id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return [
+            "data" => [
+                "comments" => Comment::where('project_id', $project_id)
+                        ->orderBy('created_at', 'desc')
+                        ->get()
+            ]
+        ];
     }
 }
