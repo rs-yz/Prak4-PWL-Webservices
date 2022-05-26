@@ -26,5 +26,18 @@ class Project extends Model
     protected $fillable = [
         'title', 'description'
     ];
+
+    protected $hidden = [
+        'deleted_at'
+    ];
+
+    public $timestamps = true;
+
+    /**
+     * Get the comments of the project
+     */
     
+    public function comments() {
+        return $this->hasMany(Comment::class);
+    }
 }

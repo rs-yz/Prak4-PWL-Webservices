@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Project;
-use App\Http\Resources\ProjectResource;
+use App\Models\Comment;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +18,13 @@ class ProjectController extends Controller
     public function index()
     {
         // Need to paginate
-        return Project::all()->toJson();
+        return [
+            'data' => [
+                'projects' => Project::all()->reject(function($project) {
+                    return $project->deleted_at != null;
+                })->values()
+            ]
+        ];  
     }
 
     /**
@@ -39,27 +45,52 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:80',
             'description' => 'required|min:16'
         ]);
 
-        return new ProjectResource(Project::create([
+        if ($validator->fails()){
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        return Project::create([
             'title' => $request->title,
             'description' => $request->description
-        ]));
+        ]);
     }
 
     /**
      * Display the specified resource.
      *
+     * @param  Illuminate\Http\Request $request
      * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        return (new ProjectResource(Project::find($id)))
-                    ->response();
+        if (!DB::table('projects')->where('id', $id)->exists()) {
+            return response()->json([
+                'message' => 'Project not found'
+            ], 404);
+        }
+
+        $project = Project::findOrFail($id);
+        $comments = $request->query('c') === 'true' ? 
+            Comment::where('project_id', $id)
+            ->orderBy('created_at', 'asc')
+            ->get() : [];
+
+        return [
+            'id' => $project->id,
+            'title' => $project->title,
+            'description' => $project->description,
+            'comments' => $comments,
+            'created_at' => $project->created_at,
+            'updated_at' => $project->updated_at
+        ];
     }
 
     /**

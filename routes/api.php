@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,3 +23,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::resource('projects', ProjectController::class)->except([
     'edit', 'create'
 ]);
+
+Route::get('projects/{project_id}/comments', [CommentController::class, 'show']);
+Route::post('projects/{project_id}/comments', [CommentController::class, 'store']);
